@@ -19,14 +19,20 @@ router.post('/register', async (req, res) => {
 
     if(!name || !email || !password){
         return res.status(400).json({message: 'Name, email, and password are required'});
+    }  const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email already registered' });
     }
+
 
     const newUser =new User({
         name,
         email,
         password
     });
-
+    
     await newUser.save();
 
     res.status(201).json(newUser);
@@ -34,6 +40,10 @@ router.post('/register', async (req, res) => {
     console.log('User created:', newUser);
 }
 catch (err){
+
+  if (err.code === 11000) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
     console.error("Error:", err);
     res.status(500).json({message: 'Server error'});
 }
